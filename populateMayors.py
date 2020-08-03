@@ -6,15 +6,15 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.select import Select
 from datetime import datetime
 
-data = pd.read_excel("web_scraping.xlsx")
+data = pd.read_excel("master_sheet.xlsx")
 chromedriver = 'chromedriver.exe'
 driver = webdriver.Chrome(executable_path = f'{chromedriver}')
 driver.get("https://www.google.com/")
 
-def googleForMayor(city, state):
+def googleForMayor(city, state, category):
     searchbox = driver.find_element_by_name('q')
     searchbox.clear()
-    searchbox.send_keys('Who is the mayor of ' + city + ',' + ' ' + state)
+    searchbox.send_keys('Who is the mayor of ' + city + ' ' + category +  ',' + ' ' + state)
     searchbox.send_keys(Keys.RETURN)
     try:
         quickAnswer = driver.find_element_by_class_name('FLP8od')
@@ -24,6 +24,7 @@ def googleForMayor(city, state):
             quickAnswer = driver.find_element_by_css_selector('div.Z0LcW.XcVN5d.AZCkJd')
             return quickAnswer.text
         except:
+            try 
             return np.nan
 
 def sanitizeMayor(mayor):
@@ -33,13 +34,16 @@ def sanitizeMayor(mayor):
     except:
         return mayor
 
-for index in range(0, len(data)):
-    #if data['State'].iloc[index] == 'New York':
-    city = data['City'].iloc[index]
+for index, row in data.iterrows():
+    city = data['Name'].iloc[index]
+    test = data['Mayor'].iloc[index]
     state = data['State'].iloc[index]
-    mayor = googleForMayor(city, state)
+    category = data['Type'].iloc[index]
+    mayor = googleForMayor(city, state, category)
     data['Mayor'].iloc[index] = sanitizeMayor(mayor)
-    data['Checked'].iloc[index] = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    if data['Mayor'].iloc[index] == lastMayor:
+        data['Mayor'].iloc[index] = np.nan
     time.sleep(1)
+    lastMayor = data['Mayor'].iloc[index]
 
 data.to_excel('mayorOut.xlsx', index = False)
