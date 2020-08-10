@@ -7,6 +7,7 @@ from selenium.webdriver.support.select import Select
 from datetime import datetime
 
 i = 0
+sheetResetPoint = False
 
 data = pd.read_excel("master_sheet.xlsx")
 chromedriver = 'chromedriver.exe'
@@ -48,22 +49,26 @@ def sanitizeMayor(mayor):
         return mayor
 
 for index, row in data.iterrows():
-    city = data['Name'].iloc[index]
-    test = data['Mayor'].iloc[index]
-    state = data['State'].iloc[index]
-    category = data['Type'].iloc[index]
-    mayor = googleForMayor(city, state, category)
-    if 'FULL NAME' in mayor:
-        mayor = sanitizeMayor(mayor)
-    if mayor == lastMayor:
-        mayor = np.nan
-    data['Mayor'].iloc[index] = mayor
-    time.sleep(1)
-    lastMayor = data['Mayor'].iloc[index]
-    if i >= 1000:
-        data.to_excel('mayorOut.xlsx', index = False)
-        i = 0
-    i =  i + 1
-    print(i)
+    if data['Mayor'].iloc[index] == 'STARTRESETHERE':
+        sheetResetPoint = True
+    if sheetResetPoint == True:
+        city = data['Name'].iloc[index]
+        test = data['Mayor'].iloc[index]
+        state = data['State'].iloc[index]
+        category = data['Type'].iloc[index]
+        mayor = googleForMayor(city, state, category)
+        if 'FULL NAME' in mayor:
+            mayor = sanitizeMayor(mayor)
+        if mayor == lastMayor:
+            mayor = np.nan
+        data['Mayor'].iloc[index] = mayor
+        time.sleep(1)
+        lastMayor = data['Mayor'].iloc[index]
+        if i >= 1000:
+            data.to_excel('mayorOut.xlsx', index = False)
+            i = 0
+        i =  i + 1
+        print('lines until file save = ' + str(1000 - i))
+        print('current line = ' + str(index))
 
 data.to_excel('mayorOut.xlsx', index = False)
